@@ -49,31 +49,52 @@ impl fmt::Display for TokenError {
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, TokenError> {
     let mut tokens = Vec::new();
-    let mut chars = input.chars().collect::<Vec<char>>();
+    let mut chars = input;
+    let add_token = |token: Token, rest: &str| {
+        tokens.push(token);
+        chars = rest;
+    };
 
-    if chars.is_empty() {
-        return Ok(tokens);
-    }
 
-    while chars.len() > 0 {
-        let mut ch = chars.remove(0);
+    // let mut chars_vec = input.chars().collect::<Vec<char>>();
+    //
+    // if chars_vec.is_empty() {
+    //     return Ok(tokens);
+    // }
+    // let mut chars = chars_vec[..];
+
+
+    while Some((ch, rest)) = chars.split_first() {
+    //while chars.len() > 0 {
+        //let mut ch = chars.remove(0);
         match ch {
             '(' => tokens.push(Token::LParen),
             ')' => tokens.push(Token::RParen),
             '"' => {
                 let mut word = String::new();
-                while chars.len() > 0 && chars[0] != '"' {
-                    word.push(chars.remove(0));
+                while let Some((&c, rest)) = chars.split_first() {
+                    if c != '"' {
+                        break;
+                    }
+                    word.push(c);
+                    chars = rest;
                 }
-
-                if chars.len() > 0 && chars[0] == '"' {
-                    chars.remove(0);
+                if let Some((&c, rest)) = chars.split_first() {
+                    chars = rest;
                 } else {
                     return Err(TokenError {
                         err: format!("Unterminated string: {}", word),
                     });
                 }
-
+                //while !chars.is_empty() && chars[0] != '"' {
+                //    word.push(chars.remove(0));
+                //}
+                //if chars.is_empty() || chars[0] != '"' {
+                //    return Err(TokenError {
+                //        err: format!("Unterminated string: {}", word),
+                //    });
+                //}
+                //chars.remove(0);
                 tokens.push(Token::String(word));
             }
             _ => {
